@@ -1,34 +1,151 @@
-$global:DockerRootCommandList = @()
-$global:DockerRootOptionsList = @()
+$global:DockerCompletion = @{}
 
-# docker [OPTIONS] COMMAND [arg...]
-# docker images [OPTIONS] [REPOSITORY]
-# docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
+$script:flagRegex = "^  (-[^, =]+),? ?(--[^= ]+)?"
+
+function script:Get-Containers($filter)
+{
+    if ($filter -eq $null)
+    {
+       docker ps -a --no-trunc --format "{{.Names}}"
+    } else {
+       docker ps -a --no-trunc --format "{{.Names}}" --filter $filter
+    }
+}
+
+function script:Get-AutoCompleteResult
+{
+    param([Parameter(ValueFromPipeline=$true)] $value)
+    
+    Process
+    {
+        New-Object System.Management.Automation.CompletionResult $value
+    }
+}
+
+filter script:MatchingCommand($commandName)
+{
+    if ($_.StartsWith($commandName))
+    {
+        $_
+    }
+}
 
 $completion_Docker = {
-    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameter)
+    param($commandName, $commandAst, $cursorPosition)
 
-    if ($global:DockerRootCommandList.Count -eq 0)
+    $command = $null
+    $commandParameters = @{}
+    $state = "Unknown"
+    $wordToComplete = $commandAst.CommandElements | Where-Object { $_.ToString() -eq $commandName } | Foreach-Object { $commandAst.CommandElements.IndexOf($_) }
+
+    for ($i=1; $i -lt $commandAst.CommandElements.Count; $i++)
     {
-        docker --help | % {
-            if ($_ -match "^    (\w+)\s+(.+)")
+        $p = $commandAst.CommandElements[$i].ToString()
+
+        if ($p.StartsWith("-"))
+        {
+            if ($state -eq "Unknown" -or $state -eq "Options")
             {
-                $global:DockerRootCommandList += $Matches[1]
+                $commandParameters[$i] = "Option"
+                $state = "Options"
             }
-            elseif ($_ -match "^  (-[^, =]+),? ?(--[^= ]+)?")
+            else
             {
-                $global:DockerRootOptionsList += $Matches[1]
-                if ($Matches[2].Success -eq $true)
-                {
-                    $dockerRootOptionsList += $Matches[2]
-                }
+                $commandParameters[$i] = "CommandOption"
+                $state = "CommandOptions"
+            }
+        } 
+        else 
+        {
+            if ($state -ne "CommandOptions")
+            {
+                $commandParameters[$i] = "Command"
+                $command = $p
+                $state = "CommandOptions"
+            } 
+            else 
+            {
+                $commandParameters[$i] = "CommandOther"
             }
         }
     }
-    $global:DockerRootCommandList | % { if ($_.StartsWith($commandName)) { New-Object System.Management.Automation.CompletionResult $_ } }
-    $global:DockerRootOptionsList | % { if ($_.StartsWith($commandName)) { New-Object System.Management.Automation.CompletionResult $_ } }
+
+    if ($global:DockerCompletion.Count -eq 0)
+    {
+        $global:DockerCompletion["commands"] = @{}
+        $global:DockerCompletion["options"] = @()
+        
+        docker --help | ForEach-Object {
+            Write-Output $_
+            if ($_ -match "^    (\w+)\s+(.+)")
+            {
+                $global:DockerCompletion["commands"][$Matches[1]] = @{}
+                
+                $currentCommand = $global:DockerCompletion["commands"][$Matches[1]]
+                $currentCommand["options"] = @()
+            }
+            elseif ($_ -match $flagRegex)
+            {
+                $global:DockerCompletion["options"] += $Matches[1]
+                if ($Matches[2] -ne $null)
+                {
+                    $global:DockerCompletion["options"] += $Matches[2]
+                 }            }
+        }
+
+    }
+    
+    if ($wordToComplete -eq $null)
+    {
+        $commandToComplete = "Command"
+        if ($commandParameters.Count -gt 0)
+        {
+            if ($commandParameters[$commandParameters.Count] -eq "Command")
+            {
+                $commandToComplete = "CommandOther"
+            }
+        } 
+    } else {
+        $commandToComplete = $commandParameters[$wordToComplete]
+    }
+
+    switch ($commandToComplete)
+    {
+        "Command" { $global:DockerCompletion["commands"].Keys | MatchingCommand -Command $commandName | Sort-Object | Get-AutoCompleteResult }
+        "Option" { $global:DockerCompletion["options"] | MatchingCommand -Command $commandName | Sort-Object | Get-AutoCompleteResult }
+        "CommandOption" { 
+            $options = $global:DockerCompletion["commands"][$command]["options"]
+            if ($options.Count -eq 0)
+            {
+                docker $command --help | % {
+                if ($_ -match $flagRegex)
+                    {
+                        $options += $Matches[1]
+                        if ($Matches[2] -ne $null)
+                        {
+                            $options += $Matches[2]
+                        }
+                    }
+                }
+            }
+
+            $global:DockerCompletion["commands"][$command]["options"] = $options
+            $options | MatchingCommand -Command $commandName | Sort-Object | Get-AutoCompleteResult
+        }
+        "CommandOther" {
+            $filter = $null 
+            switch ($command)
+            {
+                "start" { $filter = "status=exited" }
+                "stop" { $filter = "status=running" }
+            }
+            Get-Containers $filter | MatchingCommand -Command $commandName | Sort-Object | Get-AutoCompleteResult
+        }
+        default { $global:DockerCompletion["commands"].Keys | MatchingCommand -Command $commandName }
+    }
 }
 
+# Register the TabExpension2 function
 if (-not $global:options) { $global:options = @{CustomArgumentCompleters = @{};NativeArgumentCompleters = @{}}}
 $global:options['NativeArgumentCompleters']['docker'] = $Completion_Docker
 
