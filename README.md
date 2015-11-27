@@ -2,7 +2,7 @@
 Powershell tab completion for Docker
 
 ## Commands and options
-All commands (start, stop, run, ...) and their options (--attach, --cpuset-mems, ...) are autocompleted.
+All commands (`start`, `stop`, `run`, ...) and their options (`--attach`, `--cpuset-mems`, ...) are autocompleted.
 
 ![Command and option completion](img/command-option-completion.gif)
 
@@ -26,4 +26,4 @@ Once installed, the docker autocomplete will always work in a powershell session
 
 
 ## Credits
-The install script and this readme, along with the general idea, are based on work by the posh-git team.
+The install script and this readme, along with the general idea, are based on work by the [posh-git](https://github.com/dahlbyk/posh-git) team.
