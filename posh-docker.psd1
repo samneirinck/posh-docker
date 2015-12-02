@@ -80,7 +80,7 @@ AliasesToExport = '*'
 ModuleList = @('posh-docker.psm1')
 
 # List of all files packaged with this module
-FileList = @('install.ps1', 'posh-docker.psm1')
+FileList = @('install.ps1', 'tabcompletion.ps1', 'posh-docker.psm1')
 
 # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
     PrivateData = @{
