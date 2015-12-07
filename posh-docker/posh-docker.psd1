@@ -62,7 +62,7 @@ Description = 'Powershell tab completion for Docker'
 # NestedModules = @()
 
 # Functions to export from this module
-FunctionsToExport = '*'
+FunctionsToExport = ''
 
 # Cmdlets to export from this module
 CmdletsToExport = '*'
@@ -77,10 +77,10 @@ AliasesToExport = '*'
 # DscResourcesToExport = @()
 
 # List of all modules packaged with this module
-ModuleList = @('posh-docker.psm1')
+ModuleList = @()
 
 # List of all files packaged with this module
-FileList = @('install.ps1', 'tabcompletion.ps1', 'posh-docker.psm1')
+FileList = @('tabcompletion.ps1')
 
 # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
     PrivateData = @{
