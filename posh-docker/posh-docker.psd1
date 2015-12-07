@@ -88,7 +88,7 @@ FileList = @('tabcompletion.ps1')
         PSData = @{
     
             # Tags applied to this module. These help with module discovery in online galleries.
-            Tags = @('docker tab completion')
+            Tags = @('docker', 'tab completion')
     
             # A URL to the license for this module.
             LicenseUri = 'https://github.com/samneirinck/posh-docker/blob/master/LICENSE'
