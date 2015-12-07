@@ -11,19 +11,27 @@ Container names can be autocompleted. Type a command requiring a containername, 
 
 ![Container name completion](img/containername-completion.gif)
 
-# Installation (manual)
-Installation is done by performing the following steps.
+# Installation
+*Prerequisite*
 
+Verify that docker can be run from PowerShell. If the command is not found, you will need to add a docker alias or add the docker installation folder (e.g. `%ProgramFiles%\Docker Toolbox`) to your PATH environment variable.
+
+## Windows 10 / Windows Server 2016 
 1. Open a powershell prompt
-2. Verify you have PowerShell 3.0 or later with `$PSVersionTable.PSVersion`.
-3. Verify execution of scripts is allowed with `Get-ExecutionPolicy` (should be `RemoteSigned` or `Unrestricted`). If scripts are not enabled, run PowerShell as Administrator and call `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Confirm`.
-4. Verify that docker can be run from PowerShell. If the command is not found, you will need to add a docker alias or add the docker installation folder (e.g. `%ProgramFiles%\Docker Toolbox`) to your PATH environment variable.
-5. Clone the posh-docker repository to your local machine.
-6. Run `.\install.ps1`
-7. posh-docker is now installed, type docker `<TAB>` to see it in action!
+2. Run `Install-Module -Scope CurrentUser posh-docker`
 
-Once installed, the docker autocomplete will always work in a powershell session.
+## Earlier Windows versions
+1. Install [PackageManagement PowerShell Modules Preview](https://www.microsoft.com/en-us/download/details.aspx?id=49186)
+2. Open a powershell prompt
+3. Run `Install-Module -Scope CurrentUser posh-docker`
+
+# Usage
+After installation, execute the following line to enable autocompletion for the current powershell session:
+
+`Import-Module posh-docker`
+
+To make it persistent, add the above line to your profile. For example, run `notepad $PROFILE` and insert the line above.
 
 
 ## Credits
-The install script and this readme, along with the general idea, are based on work by the [posh-git](https://github.com/dahlbyk/posh-git) team.
+- Stuart Leeks: conversion to powershell module & general feedback.

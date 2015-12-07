@@ -8,7 +8,7 @@
 RootModule = 'posh-docker'
 
 # Version number of this module.
-ModuleVersion = '0.0.1'
+ModuleVersion = '0.0.2'
 
 # ID used to uniquely identify this module
 GUID = '2eeaf2f5-191f-4bfd-9a5f-d574e6465631'
