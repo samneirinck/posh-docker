@@ -62,7 +62,7 @@ Description = 'Powershell tab completion for Docker'
 # NestedModules = @()
 
 # Functions to export from this module
-FunctionsToExport = ''
+FunctionsToExport = 'ConvertFrom-Docker'
 
 # Cmdlets to export from this module
 CmdletsToExport = '*'
