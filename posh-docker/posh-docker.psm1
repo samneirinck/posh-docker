@@ -6,10 +6,14 @@ function script:Get-Containers($filter)
 {
     if ($filter -eq $null)
     {
-       docker ps -a --no-trunc --format "{{.Names}}"
-    } else {
-       docker ps -a --no-trunc --format "{{.Names}}" --filter $filter
+       $names = docker ps -a --no-trunc --format "{{.Names}}"
     }
+    else
+    {
+       $names = docker ps -a --no-trunc --format "{{.Names}}" --filter $filter
+    }
+
+    $names | %{ $_.Split(",") }
 }
 
 function script:Get-AutoCompleteResult
