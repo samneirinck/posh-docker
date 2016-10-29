@@ -1,0 +1,8 @@
+version: build-{build}
+skip_non_tags: true
+image: WMF 5
+build: off
+test_script:
+- ps: '"Run tests"'
+deploy_script:
+- ps: '"deploy"'
