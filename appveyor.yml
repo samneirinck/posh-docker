@@ -18,6 +18,6 @@ deploy_script:
     {
       Write-Host "Starting deployment of tag $env:APPVEYOR_REPO_TAG"
       $currentVersion = (Import-PowerShellDataFile posh-docker\posh-docker.psd1).ModuleVersion
-      ((Get-Content .\ReportingServicesTools.psd1).replace("ModuleVersion = '$($currentVersion)'", "ModuleVersion = '$($env:APPVEYOR_REPO_TAG_NAME)'")) | Set-Content .\$moduleName.psd1
+      ((Get-Content posh-docker\posh-docker.psd1).replace("ModuleVersion = '$($currentVersion)'", "ModuleVersion = '$($env:APPVEYOR_REPO_TAG_NAME)'")) | Set-Content .\$moduleName.psd1
       Publish-Module -path posh-docker -NuGetApiKey $env:POWERSHELLGALLERY_KEY
     }
