@@ -16,6 +16,11 @@ function script:Get-Containers($filter)
     $names | %{ $_.Split(",") }
 }
 
+function script:Get-Images()
+{
+    docker images --no-trunc | ConvertFrom-Docker
+}
+
 function script:Get-AutoCompleteResult
 {
     param([Parameter(ValueFromPipeline=$true)] $value)
@@ -138,15 +143,34 @@ $completion_Docker = {
             $options | MatchingCommand -Command $commandName | Sort-Object | Get-AutoCompleteResult
         }
         "CommandOther" {
-            $filter = $null 
+            $filter = $null
             switch ($command)
             {
-                "start" { $filter = "status=exited" }
-                "stop" { $filter = "status=running" }
+                "start" { FilterContainers $commandName "status=exited" }
+                "stop" { FilterContainers $commandName "status=running" }
+                { @("run", "rmi", "history", "push", "save", "tag") -contains $_ } { CompleteImages $commandName }
+                default { FilterContainers $commandName }
             }
-            Get-Containers $filter | MatchingCommand -Command $commandName | Sort-Object | Get-AutoCompleteResult
+            
         }
         default { $global:DockerCompletion["commands"].Keys | MatchingCommand -Command $commandName }
+    }
+}
+
+function script:FilterContainers($commandName, $filter)
+{
+    Get-Containers $filter | MatchingCommand -Command $commandName | Sort-Object | Get-AutoCompleteResult
+}
+
+function script:CompleteImages($commandName)
+{
+    if ($commandName.Contains(":"))
+    {
+        Get-Images | % { $_.Repository + ":" + $_.Tag } | MatchingCommand -Command $commandName | Sort-Object -Unique | Get-AutoCompleteResult
+    } 
+    else 
+    {
+        Get-Images | Select-Object -ExpandProperty Repository | MatchingCommand -Command $commandName |  Sort-Object -Unique | Get-AutoCompleteResult
     }
 }
 
