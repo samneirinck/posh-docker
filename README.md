@@ -1,6 +1,9 @@
 # posh-docker
 Powershell tab completion for Docker
 
+[![Build status](https://ci.appveyor.com/api/projects/status/d4q4o9sdyvmm8yfh?svg=true)](https://ci.appveyor.com/project/samneirinck/posh-docker)
+
+
 ## Commands and options
 All commands (`start`, `stop`, `run`, ...) and their options (`--attach`, `--cpuset-mems`, ...) are autocompleted.
 
