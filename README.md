@@ -9,8 +9,8 @@ All commands (`start`, `stop`, `run`, ...) and their options (`--attach`, `--cpu
 
 ![Command and option completion](img/command-option-completion.gif)
 
-## Container names
-Container names can be autocompleted. Type a command requiring a containername, press `<TAB>` and the name will be completed.
+## Container and image names
+Container and image names can be autocompleted. Type a command requiring a container or image name, press `<TAB>` and the name will be completed.
 
 ![Container name completion](img/containername-completion.gif)
 
