@@ -1,0 +1,24 @@
+environment:
+  POWERSHELLGALLERY_KEY:
+    secure: d1NtTec9Ym5eUe7lO/7qE90Rj85c3COTtC+4rorSMYBTKZo3gj8ewm65oN5t9WRM
+
+install:
+- ps: Install-PackageProvider -Name NuGet -Force
+
+build: off
+
+test_script:
+- ps: '"Run tests"'
+
+deploy_script:
+- ps: |
+    # Deploy to Powershell Gallery when we have a tag
+    $deploy = ($env:APPVEYOR_REPO_TAG -eq $true)
+    if ($deploy)
+    {
+      Write-Host "Starting deployment of tag $env:APPVEYOR_REPO_TAG_NAME"
+      $modulePath = "posh-docker\posh-docker.psd1"
+      $currentVersion = (Import-PowerShellDataFile $modulePath).ModuleVersion
+      ((Get-Content $modulePath).replace("ModuleVersion = '$($currentVersion)'", "ModuleVersion = '$($env:APPVEYOR_REPO_TAG_NAME.Substring(1))'")) | Set-Content $modulePath
+      Publish-Module -path posh-docker -NuGetApiKey $env:POWERSHELLGALLERY_KEY
+    }

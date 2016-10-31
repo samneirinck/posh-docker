@@ -8,7 +8,7 @@
 RootModule = 'posh-docker'
 
 # Version number of this module.
-ModuleVersion = '0.0.2'
+ModuleVersion = '0.0.0'
 
 # ID used to uniquely identify this module
 GUID = '2eeaf2f5-191f-4bfd-9a5f-d574e6465631'
@@ -17,7 +17,7 @@ GUID = '2eeaf2f5-191f-4bfd-9a5f-d574e6465631'
 Author = 'Sam Neirinck'
 
 # Company or vendor of this module
-CompanyName = 'Unknown'
+CompanyName = 'Sam'
 
 # Copyright statement for this module
 Copyright = 'Copyright (c) 2015 Sam Neirinck'
@@ -80,7 +80,7 @@ AliasesToExport = '*'
 ModuleList = @()
 
 # List of all files packaged with this module
-FileList = @('tabcompletion.ps1')
+FileList = @()
 
 # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
     PrivateData = @{
@@ -88,7 +88,7 @@ FileList = @('tabcompletion.ps1')
         PSData = @{
     
             # Tags applied to this module. These help with module discovery in online galleries.
-            Tags = @('docker', 'tab completion')
+            Tags = @('docker', 'tab-completion')
     
             # A URL to the license for this module.
             LicenseUri = 'https://github.com/samneirinck/posh-docker/blob/master/LICENSE'
