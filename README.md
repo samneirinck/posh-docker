@@ -35,6 +35,9 @@ After installation, execute the following line to enable autocompletion for the 
 
 To make it persistent, add the above line to your profile. For example, run `notepad $PROFILE` and insert the line above.
 
+# Updating
+To update to the latest version of posh-docker, run the following command:
+`Update-Module posh-docker`
 
-## Credits
+# Credits
 - Stuart Leeks: conversion to powershell module & general feedback.
