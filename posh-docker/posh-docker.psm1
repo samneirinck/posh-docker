@@ -10,7 +10,7 @@ function script:Get-Containers($filter)
     }
     else
     {
-       $names = docker ps -a --no-trunc --format "{{.Names}}" --filter $filter
+       $names = docker ps -a --no-trunc --format "{{.Names}}" ($filter | % { "--filter", $_ })
     }
 
     $names | %{ $_.Split(",") }
@@ -146,7 +146,7 @@ $completion_Docker = {
             $filter = $null
             switch ($command)
             {
-                "start" { FilterContainers $commandName "status=exited" }
+                "start" { FilterContainers $commandName "status=created", "status=exited" }
                 "stop" { FilterContainers $commandName "status=running" }
                 { @("run", "rmi", "history", "push", "save", "tag") -contains $_ } { CompleteImages $commandName }
                 default { FilterContainers $commandName }
