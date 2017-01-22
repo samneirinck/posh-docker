@@ -86,7 +86,7 @@ $completion_Docker = {
         
         docker --help | ForEach-Object {
             Write-Output $_
-            if ($_ -match "^    (\w+)\s+(.+)")
+            if ($_ -match "^\s{2,3}(\w+)\s+(.+)")
             {
                 $global:DockerCompletion["commands"][$Matches[1]] = @{}
                 
