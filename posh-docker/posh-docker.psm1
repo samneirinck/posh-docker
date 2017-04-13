@@ -2,39 +2,31 @@ $global:DockerCompletion = @{}
 
 $script:flagRegex = "^  (-[^, =]+),? ?(--[^= ]+)?"
 
-function script:Get-Containers($filter)
-{
-    if ($filter -eq $null)
-    {
-       $names = docker ps -a --no-trunc --format "{{.Names}}"
+function script:Get-Containers($filter) {
+    if ($filter -eq $null) {
+        $names = docker ps -a --no-trunc --format "{{.Names}}"
     }
-    else
-    {
-       $names = docker ps -a --no-trunc --format "{{.Names}}" ($filter | % { "--filter", $_ })
+    else {
+        $names = docker ps -a --no-trunc --format "{{.Names}}" ($filter | % { "--filter", $_ })
     }
 
     $names | %{ $_.Split(",") }
 }
 
-function script:Get-Images()
-{
+function script:Get-Images() {
     docker images --no-trunc | ConvertFrom-Docker
 }
 
-function script:Get-AutoCompleteResult
-{
+function script:Get-AutoCompleteResult {
     param([Parameter(ValueFromPipeline=$true)] $value)
     
-    Process
-    {
+    Process {
         New-Object System.Management.Automation.CompletionResult $value
     }
 }
 
-filter script:MatchingCommand($commandName)
-{
-    if ($_.StartsWith($commandName))
-    {
+filter script:MatchingCommand($commandName) {
+    if ($_.StartsWith($commandName)) {
         $_
     }
 }
@@ -47,71 +39,57 @@ $completion_Docker = {
     $state = "Unknown"
     $wordToComplete = $commandAst.CommandElements | Where-Object { $_.ToString() -eq $commandName } | Foreach-Object { $commandAst.CommandElements.IndexOf($_) }
 
-    for ($i=1; $i -lt $commandAst.CommandElements.Count; $i++)
-    {
+    for ($i=1; $i -lt $commandAst.CommandElements.Count; $i++) {
         $p = $commandAst.CommandElements[$i].ToString()
 
-        if ($p.StartsWith("-"))
-        {
-            if ($state -eq "Unknown" -or $state -eq "Options")
-            {
+        if ($p.StartsWith("-")) {
+            if ($state -eq "Unknown" -or $state -eq "Options") {
                 $commandParameters[$i] = "Option"
                 $state = "Options"
             }
-            else
-            {
+            else {
                 $commandParameters[$i] = "CommandOption"
                 $state = "CommandOptions"
             }
         } 
-        else 
-        {
-            if ($state -ne "CommandOptions")
-            {
+        else {
+            if ($state -ne "CommandOptions") {
                 $commandParameters[$i] = "Command"
                 $command = $p
                 $state = "CommandOptions"
             } 
-            else 
-            {
+            else {
                 $commandParameters[$i] = "CommandOther"
             }
         }
     }
 
-    if ($global:DockerCompletion.Count -eq 0)
-    {
+    if ($global:DockerCompletion.Count -eq 0) {
         $global:DockerCompletion["commands"] = @{}
         $global:DockerCompletion["options"] = @()
         
         docker --help | ForEach-Object {
             Write-Output $_
-            if ($_ -match "^\s{2,3}(\w+)\s+(.+)")
-            {
+            if ($_ -match "^\s{2,3}(\w+)\s+(.+)") {
                 $global:DockerCompletion["commands"][$Matches[1]] = @{}
                 
                 $currentCommand = $global:DockerCompletion["commands"][$Matches[1]]
                 $currentCommand["options"] = @()
             }
-            elseif ($_ -match $flagRegex)
-            {
+            elseif ($_ -match $flagRegex) {
                 $global:DockerCompletion["options"] += $Matches[1]
-                if ($Matches[2] -ne $null)
-                {
+                if ($Matches[2] -ne $null) {
                     $global:DockerCompletion["options"] += $Matches[2]
-                 }
+                }
             }
         }
 
     }
     
-    if ($wordToComplete -eq $null)
-    {
+    if ($wordToComplete -eq $null) {
         $commandToComplete = "Command"
-        if ($commandParameters.Count -gt 0)
-        {
-            if ($commandParameters[$commandParameters.Count] -eq "Command")
-            {
+        if ($commandParameters.Count -gt 0) {
+            if ($commandParameters[$commandParameters.Count] -eq "Command") {
                 $commandToComplete = "CommandOther"
             }
         } 
@@ -119,20 +97,20 @@ $completion_Docker = {
         $commandToComplete = $commandParameters[$wordToComplete]
     }
 
-    switch ($commandToComplete)
-    {
-        "Command" { $global:DockerCompletion["commands"].Keys | MatchingCommand -Command $commandName | Sort-Object | Get-AutoCompleteResult }
-        "Option" { $global:DockerCompletion["options"] | MatchingCommand -Command $commandName | Sort-Object | Get-AutoCompleteResult }
+    switch ($commandToComplete) {
+        "Command" {
+            $global:DockerCompletion["commands"].Keys | MatchingCommand -Command $commandName | Sort-Object | Get-AutoCompleteResult 
+        }
+        "Option" {
+            $global:DockerCompletion["options"] | MatchingCommand -Command $commandName | Sort-Object | Get-AutoCompleteResult 
+        }
         "CommandOption" { 
             $options = $global:DockerCompletion["commands"][$command]["options"]
-            if ($options.Count -eq 0)
-            {
+            if ($options.Count -eq 0) {
                 docker $command --help | % {
-                if ($_ -match $flagRegex)
-                    {
+                    if ($_ -match $flagRegex) {
                         $options += $Matches[1]
-                        if ($Matches[2] -ne $null)
-                        {
+                        if ($Matches[2] -ne $null) {
                             $options += $Matches[2]
                         }
                     }
@@ -144,38 +122,44 @@ $completion_Docker = {
         }
         "CommandOther" {
             $filter = $null
-            switch ($command)
-            {
-                "start" { FilterContainers $commandName "status=created", "status=exited" }
-                "stop" { FilterContainers $commandName "status=running" }
-                { @("run", "rmi", "history", "push", "save", "tag") -contains $_ } { CompleteImages $commandName }
-                default { FilterContainers $commandName }
+            switch ($command) {
+                "start" {
+                    FilterContainers $commandName "status=created", "status=exited" 
+                }
+                "stop" {
+                    FilterContainers $commandName "status=running" 
+                } { @("run", "rmi", "history", "push", "save", "tag") -contains $_ } {
+                    CompleteImages $commandName 
+                }
+                default {
+                    FilterContainers $commandName 
+                }
             }
             
         }
-        default { $global:DockerCompletion["commands"].Keys | MatchingCommand -Command $commandName }
+        default {
+            $global:DockerCompletion["commands"].Keys | MatchingCommand -Command $commandName 
+        }
     }
 }
 
-function script:FilterContainers($commandName, $filter)
-{
+function script:FilterContainers($commandName, $filter) {
     Get-Containers $filter | MatchingCommand -Command $commandName | Sort-Object | Get-AutoCompleteResult
 }
 
-function script:CompleteImages($commandName)
-{
-    if ($commandName.Contains(":"))
-    {
+function script:CompleteImages($commandName) {
+    if ($commandName.Contains(":")) {
         Get-Images | % { $_.Repository + ":" + $_.Tag } | MatchingCommand -Command $commandName | Sort-Object -Unique | Get-AutoCompleteResult
     } 
-    else 
-    {
+    else {
         Get-Images | Select-Object -ExpandProperty Repository | MatchingCommand -Command $commandName |  Sort-Object -Unique | Get-AutoCompleteResult
     }
 }
 
 # Register the TabExpension2 function
-if (-not $global:options) { $global:options = @{CustomArgumentCompleters = @{};NativeArgumentCompleters = @{}}}
+if (-not $global:options) {
+    $global:options = @{CustomArgumentCompleters = @{};NativeArgumentCompleters = @{}}
+}
 $global:options['NativeArgumentCompleters']['docker'] = $Completion_Docker
 
 $function:tabexpansion2 = $function:tabexpansion2 -replace 'End\r\n{','End { if ($null -ne $options) { $options += $global:options} else {$options = $global:options}'
@@ -191,8 +175,7 @@ function PascalName($name){
 }
 function GetHeaderBreak($headerRow, $startPoint=0){
     $i = $startPoint
-    while( $i + 1  -lt $headerRow.Length)
-    {
+    while( $i + 1  -lt $headerRow.Length) {
         if ($headerRow[$i] -eq ' ' -and $headerRow[$i+1] -eq ' '){
             return $i
             break
@@ -203,8 +186,7 @@ function GetHeaderBreak($headerRow, $startPoint=0){
 }
 function GetHeaderNonBreak($headerRow, $startPoint=0){
     $i = $startPoint
-    while( $i + 1  -lt $headerRow.Length)
-    {
+    while( $i + 1  -lt $headerRow.Length) {
         if ($headerRow[$i] -ne ' '){
             return $i
             break
@@ -227,7 +209,7 @@ function GetColumnInfo($headerRow){
             $temp = $lastIndex
             $lastIndex = GetHeaderNonBreak $headerRow $i
             New-Object PSObject -Property @{ HeaderName = $name; Name = PascalName $name; Start=$temp; End=$lastIndex}
-       }
+        }
     }
 }
 function ParseRow($row, $columnInfo) {
@@ -260,16 +242,15 @@ function ConvertFrom-Docker{
     [CmdletBinding()]
     Param(
         [Parameter(Mandatory=$True,
-		ValueFromPipeline=$True)]
-		[object[]]$items
+            ValueFromPipeline=$True)]
+        [object[]]$items
     )
     
     begin{
         $positions = $null;
     }
     process {
-        foreach ($item in $items)
-        {
+        foreach ($item in $items) {
             if($null -eq $positions) {
                 # header row => determine column positions
                 $positions  = GetColumnInfo -headerRow $item
