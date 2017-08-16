@@ -10,10 +10,10 @@ function script:Get-Containers($filter)
     }
     else
     {
-       $names = docker ps -a --no-trunc --format "{{.Names}}" ($filter | % { "--filter", $_ })
+       $names = docker ps -a --no-trunc --format "{{.Names}}" ($filter | ForEach-Object { "--filter", $_ })
     }
 
-    $names | %{ $_.Split(",") }
+    $names | ForEach-Object{ $_.Split(",") }
 }
 
 function script:Get-Images()
@@ -127,7 +127,7 @@ $completion_Docker = {
             $options = $global:DockerCompletion["commands"][$command]["options"]
             if ($options.Count -eq 0)
             {
-                docker $command --help | % {
+                docker $command --help | ForEach-Object {
                 if ($_ -match $flagRegex)
                     {
                         $options += $Matches[1]
@@ -143,7 +143,6 @@ $completion_Docker = {
             $options | MatchingCommand -Command $commandName | Sort-Object | Get-AutoCompleteResult
         }
         "CommandOther" {
-            $filter = $null
             switch ($command)
             {
                 "start" { FilterContainers $commandName "status=created", "status=exited" }
@@ -166,7 +165,7 @@ function script:CompleteImages($commandName)
 {
     if ($commandName.Contains(":"))
     {
-        Get-Images | % { $_.Repository + ":" + $_.Tag } | MatchingCommand -Command $commandName | Sort-Object -Unique | Get-AutoCompleteResult
+        Get-Images | ForEach-Object { $_.Repository + ":" + $_.Tag } | MatchingCommand -Command $commandName | Sort-Object -Unique | Get-AutoCompleteResult
     } 
     else 
     {
