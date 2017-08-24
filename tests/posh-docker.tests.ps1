@@ -2,10 +2,28 @@ Import-Module -Force $PSScriptRoot\..\posh-docker\posh-docker.psm1
 
 
 Describe "CompleteCommands" {
-    Context "When there are commands" {
+    Context "When docker command is typed" {
 
-        $result = 5
+        $result = CompleteCommand "docker"
 
-        $result | Should Be 1.2
+        It "Can complete" {
+            $result.Count | Should BeGreaterThan 0
+        }
+       
+        It "Completes core commands" {
+            $result -contains "ps" | Should Be $true
+            $result -contains "pull" | Should Be $true
+            $result -contains "wait" | Should Be $true
+            $result -contains "attach" | Should Be $true
+        }
+
+        It "Completes options" {
+            $result -contains "--version" | Should Be $true
+        }
+
+        It "Completes management commands" {
+            $result -contains "config" | Should Be $true
+            $result -contains "system" | Should Be $true
+        }
     }
 }
