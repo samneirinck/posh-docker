@@ -4,7 +4,7 @@ Import-Module -Force $PSScriptRoot\..\posh-docker\posh-docker.psm1
 Describe "CompleteCommands" {
     Context "When docker command is typed" {
 
-        $result = CompleteCommand "docker"
+        $result = CompleteCommand "docker [ ]"
 
         It "Can complete" {
             $result.Count | Should BeGreaterThan 0
