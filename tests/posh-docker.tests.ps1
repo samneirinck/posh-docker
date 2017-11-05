@@ -1,5 +1,12 @@
 Import-Module -Force $PSScriptRoot\..\posh-docker\posh-docker.psm1
 
+Describe "Initialization" {
+    Context "When module is loaded" {
+        It "DockerCompletion hash table is filled in"{
+            $Global:DockerCompletion.Count | Should BeGreaterThan 0
+        }
+    }
+}
 
 Describe "CompleteCommands" {
     Context "When docker command is typed" {
