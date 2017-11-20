@@ -52,6 +52,10 @@ filter script:MatchingCommand($commandName)
     }
 }
 
+function DockerTabExpansion($lastBlock) {
+    Get-DockerCompletion $lastBlock
+}
+
 $completion_Docker = {
     param($commandName, $commandAst, $cursorPosition)
 
@@ -198,11 +202,25 @@ function script:CompleteImages($commandName)
     }
 }
 
-# Register the TabExpension2 function
-if (-not $global:options) { $global:options = @{CustomArgumentCompleters = @{};NativeArgumentCompleters = @{}}}
-$global:options['NativeArgumentCompleters']['docker'] = $Completion_Docker
+if (Test-Path Function:\TabExpansion) {
+    Rename-Item Function:\TabExpansion TabExpansionDockerBackup
+}
 
-$function:tabexpansion2 = $function:tabexpansion2 -replace 'End\r\n{','End { if ($null -ne $options) { $options += $global:options} else {$options = $global:options}'
+function TabExpansion($line, $lastWord) {
+    $lastBlock = [regex]::Split($line, '[|;]')[-1].TrimStart()
+
+    switch -regex ($lastBlock) {
+        # Execute git tab completion for all git-related commands
+        "^$(Get-AliasPattern docker) (.*)" { DockerTabExpansion $lastBlock }
+
+        # Fall back on existing tab expansion
+        default {
+            if (Test-Path Function:\TabExpansionDockerBackup) {
+                TabExpansionDockerBackup $line $lastWord
+            }
+        }
+    }
+}
 
 
 
