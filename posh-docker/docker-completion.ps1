@@ -21,8 +21,8 @@ $dockerShortOptions = @{
 }
 
 $dockerLongOptions = @{
-    ''       = @('config', 'debug', 'host', 'log-level', 'tls', 'tlscert', 'tlskey', 'tlsverify', 'version')
-    'attach' = @('detach-keys', 'no-stdin', 'sig-proxyd')
+    ''       = @('config', 'debug', 'host', 'log-level', 'tls', 'tlscacert', 'tlscert', 'tlskey', 'tlsverify', 'version')
+    'attach' = @('detach-keys', 'no-stdin', 'sig-proxy')
     'build'  = @('add-host', 'build-arg', 'cache-from', 'cgroup-parent', 'compress', 'cpu-period', 'cpu-quota', 
         'cpu-shares', 'cpuset-cpus', 'cpuset-mems', 'disable-content-trust', 'file', 'force-rm', 'iidfile', 'isolation', 
         'label', 'memory', 'memory-swap', 'network', 'no-cache', 'pull', 'quiet', 'rm', 'security-opt', 'shm-size', 
@@ -58,19 +58,19 @@ function Script:Get-DockerShortOptions($filter) {
     $dockerShortOptions[''] | Where-Object { $_ -like "$filter*" } | Sort-Object | ForEach-Object { -join ("-", $_) }
 }
 
-function Script:Get-DockerLongOptions($filter) {
-    $dockerLongOptions[''] | Where-Object { $_ -like "$filter*" } | Sort-Object | ForEach-Object { -join ("--", $_) }
+function Script:Get-DockerLongOptions($CommandName = '', $Filter = '') {
+    $dockerLongOptions[$CommandName] | Where-Object { $_ -like "$Filter*" } | Sort-Object | ForEach-Object { -join ("--", $_) }
 }
 
-function Script:Get-DockerContainers($nameFilter, $filter) {
-    if ($filter -eq $null) {
+function Script:Get-DockerContainers($CommandName = '', $Filter = '') {
+    if ($Filter -eq '') {
         $names = Invoke-Docker ps -a --no-trunc --format "{{.Names}}"
     }
     else {
-        $names = Invoke-Docker ps -a --no-trunc --format "{{.Names}}" ($filter | ForEach-Object { "--filter", $_ })
+        #$names = Invoke-Docker ps -a --no-trunc --format "{{.Names}}" ($filter | ForEach-Object { "--filter", $_ })
     }
 
-    $names | Where-Object { $_ -like "$nameFilter*" } | Sort-Object
+    $names | Where-Object { $_ -like "$Filter*" } | Sort-Object
 }
 
 function Script:Get-ExpandCommands($command, $option, $value) {
@@ -85,6 +85,10 @@ function Get-DockerCompletion($inputString) {
             Get-DockerCommands $Matches['command']
         }
 
+        "^(?<command>$($dockerLongOptions.Keys -join '|'))\s+--(?<option>\S*)$" {
+            Get-DockerLongOptions -CommandName $Matches['command'] -Filter $Matches['option']
+        }
+ 
         # Handles docker --<option> <value>
         "^.*--(?<option>\S*) (?<value>\S*)$" {
             Get-ExpandCommands '' $Matches['option'] $Matches['value']
@@ -92,7 +96,7 @@ function Get-DockerCompletion($inputString) {
             
         # Handles docker <--option>
         "^.*--(?<option>\S*)$" {
-            Get-DockerLongOptions $Matches['option']
+            Get-DockerLongOptions -Filter $Matches['option']
         }
 
         # Handles docker <-option>
@@ -100,6 +104,11 @@ function Get-DockerCompletion($inputString) {
             Get-DockerShortOptions $Matches['option']
         }
 
+        # Handles docker <cmd> CONTAINER
+        "^(?<command>attach|commit|diff|exec|export|kill|logs|pause|port|rename|restart|rm|start|stats|stop|top|unpause|update|wait).*(?<containerName>\S*)$" {
+            Get-DockerContainers -CommandName $Matches['command'] -Filter $Matches['ContainerName']
+        }
+            
         # "^attach.* (?<container>\S*)$" {
         #     Get-DockerContainers $Matches['container']
         # }
