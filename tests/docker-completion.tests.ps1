@@ -51,18 +51,21 @@ Describe "Docker Tab completion tests" {
             $result -contains "fatal" | Should Be $true
         }
 
-        It "Tab complets docker attach --"{
+        It "Tab completes docker attach --"{
             $result = Get-DockerCompletion "docker attach --"
             $result -contains "--detach-keys" | Should Be $true
             $result -contains "--no-stdin" | Should Be $true
             $result -contains "--sig-proxy" | Should Be $true
         }
 
-        It "Tab complets docker attach "{
-            $result = Get-DockerCompletion "docker attach"
-            $result -contains "--detach-keys" | Should Be $true
-            $result -contains "--no-stdin" | Should Be $true
-            $result -contains "--sig-proxy" | Should Be $true
+        It "Tab completes docker ps -"{
+            $result = Get-DockerCompletion "docker ps -"
+            $result -contains "-a" | Should Be $true
+            $result -contains "-f" | Should Be $true
+            $result -contains "-n" | Should Be $true
+            $result -contains "-l" | Should Be $true
+            $result -contains "-q" | Should Be $true
+            $result -contains "-s" | Should Be $true
         }
 
     }

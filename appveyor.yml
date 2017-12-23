@@ -1,3 +1,8 @@
+sudo: required
+
+services:
+- docker
+
 environment:
   POWERSHELLGALLERY_KEY:
     secure: d1NtTec9Ym5eUe7lO/7qE90Rj85c3COTtC+4rorSMYBTKZo3gj8ewm65oN5t9WRM
