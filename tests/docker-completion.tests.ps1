@@ -58,6 +58,11 @@ Describe "Docker Tab completion tests" {
             $result -contains "--sig-proxy" | Should Be $true
         }
 
+        It "Tab completes docker rm b"{
+            $result = Get-DockerCompletion "docker rm b"
+        }
+
+
         It "Tab completes docker ps -"{
             $result = Get-DockerCompletion "docker ps -"
             $result -contains "-a" | Should Be $true
@@ -66,6 +71,10 @@ Describe "Docker Tab completion tests" {
             $result -contains "-l" | Should Be $true
             $result -contains "-q" | Should Be $true
             $result -contains "-s" | Should Be $true
+        }
+
+        It "Completes docker container l" {
+            $result = Get-DockerCompletion "docker container l"
         }
 
     }

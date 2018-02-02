@@ -4,15 +4,33 @@ if ((IsInPath "docker") -eq $false) {
     Write-Warning "docker command could not be found. Please make sure docker is installed correctly."
 }
 
+$globalBooleanOptions = @('--debug', '-D', '--tls', '--tlsverify')
+$globalOptionsWithArgs = @('--config', '--host', '-H', '--log-level', '-l', '--tlscacert', '--tlscert', '--tlskey')
+$currentWord = ''
+$previousWord = ''
+
 $dockerCommands = @('attach', 'build', 'commit', 'cp', 'create', 'deploy', 'diff', 'events', 'exec',
     'export', 'history', 'images', 'import', 'info', 'inspect', 'kill', 'load', 'login',
     'logout', 'logs', 'pause', 'port', 'ps', 'pull', 'push', 'rename', 'restart', 'rm',
     'rmi', 'run', 'save', 'search', 'start', 'stats', 'stop', 'tag', 'top', 'unpause',
     'update', 'version', 'wait')
 
-$dockerManagementCommands = @('checkpoint', 'config', 'container', 'image', 'network', 'node',
-    'plugin', 'secret', 'service', 'stack', 'swarm', 'system', 'trust',
-    'volume')
+$dockerManagementCommands = @{
+    'checkpoint' = @('create', 'ls', 'rm')
+    'config'     = @('create', 'inspect', 'ls', 'rm')
+    'container'  = @('attach', 'commit', 'cp', 'create', 'diff', 'exec', 'export', 'inspect', 'kill', 'logs', 'ls', 'pause', 'port', 'prune', 'rename', 'restart', 'rm', 'run', 'start', 'stats', 'stop', 'top', 'unpause', 'update', 'wait')
+    'image'      = @('build', 'history', 'import', 'inspect', 'load', 'ls', 'prune', 'pull', 'push', 'rm', 'save', 'tag')
+    'network'    = @('connect', 'create', 'disconnect', 'inspect', 'ls', 'prune', 'rm')
+    'node'       = @('demote', 'inspect', 'ls', 'promote', 'ps', 'rm', 'update')
+    'plugin'     = @('create', 'disable', 'enable', 'inspect', 'install', 'ls', 'push', 'rm', 'set', 'upgrade')
+    'secret'     = @('create', 'inspect', 'ls', 'rm')
+    'service'    = @('create', 'inspect', 'logs', 'ls', 'ps', 'rm', 'rollback', 'scale', 'update')
+    'stack'      = @('deploy', 'ls', 'ps', 'rm', 'services')
+    'swarm'      = @('ca', 'init', 'join', 'join-token', 'leave', 'unlock', 'unlock-key', 'update')
+    'system'     = @('df', 'events', 'info', 'prune')
+    'trust'      = @('key generate', 'key load', 'inspect', 'revoke', 'sign', 'view')
+    'volume'     = @('create', 'inspect', 'ls', 'prune', 'rm')
+}
 
 $dockerShortOptions = @{
     ''        = @('D', 'H', 'l', 'v')
@@ -122,14 +140,14 @@ $longDockerOptionsValues = @{
     }
 }
 
-$dockerAllCommands = $dockerCommands + $dockerManagementCommands
-
-function Invoke-Docker() {
-    & "docker.exe" $args
-}
+$dockerAllCommands = $dockerCommands + $dockerManagementCommands.Keys
 
 function Script:Get-DockerCommands($filter) {
     $dockerAllCommands | Where-Object { $_ -like "$filter*" } | Sort-Object
+}
+
+function Script:Get-DockerMgmtCommands($MgmtCommandName = '', $CommandName = '') {
+    $dockerManagementCommands[$MgmtCommandName] | Where-Object { $_ -like "$CommandName*" } | Sort-Object
 }
 
 function Script:Get-DockerShortOptions($CommandName = '', $Filter = '') {
@@ -140,15 +158,53 @@ function Script:Get-DockerLongOptions($CommandName = '', $Filter = '') {
     $dockerLongOptions[$CommandName] | Where-Object { $_ -like "$Filter*" } | Sort-Object | ForEach-Object { -join ("--", $_) }
 }
 
+function Script:Get-DockerFiltersForCommand($CommandName = '') {
+    $filters = @()
+    switch ($CommandName) {
+        "rm" { $filters = @('status=created', 'status=exited') }
+        { @("checkpoint", "attach", "exec", "kill", "pause", "run", "stats", "stop", "top", "network connect") -contains $_ } { $filters = @("status=running") }
+        "start" { $filters = @("status=exited") }
+        "unpause" { $filters = @("status=paused") }
+    }
+    return $filters
+}
+
+
 function Script:Get-DockerContainers($CommandName = '', $Filter = '') {
-    if ($Filter -eq '') {
-        $names = Invoke-Docker ps -a --no-trunc --format "{{.Names}}"
+    $dockerFilters = Get-DockerFiltersForCommand -CommandName $CommandName
+
+    if ($dockerFilters.Length -eq 0) {
+        $names = docker ps -a --no-trunc --format "{{.Names}}"
     }
     else {
-        #$names = Invoke-Docker ps -a --no-trunc --format "{{.Names}}" ($filter | ForEach-Object { "--filter", $_ })
+        $names = docker ps -a --no-trunc --format "{{.Names}}" ($dockerFilters | ForEach-Object { "--filter", $_ })
     }
 
     $names | Where-Object { $_ -like "$Filter*" } | Sort-Object
+}
+
+function Script:Complete-Docker-Docker() {
+    $options = $globalBooleanOptions + ('--help', '--version', '-v')
+
+    switch ($previousWord) {
+        "--config" { return }
+        { @("--log-level", '') -contains $_ } {}
+    }
+
+    if ($currentWord.StartsWith("-"))
+    {
+        return $options + $globalOptionsWithArgs | Where-Object { $_ -like "$currentWord*" } | Sort-Object
+    }
+
+    return @('attach', 'build', 'commit', 'cp', 'create', 'deploy', 'diff', 'events', 'exec',
+    'export', 'history', 'images', 'import', 'info', 'inspect', 'kill', 'load', 'login',
+    'logout', 'logs', 'pause', 'port', 'ps', 'pull', 'push', 'rename', 'restart', 'rm',
+    'rmi', 'run', 'save', 'search', 'start', 'stats', 'stop', 'tag', 'top', 'unpause',
+    'update', 'version', 'wait') | Where-Object { $_ -like "$currentWord*" } | Sort-Object
+}
+
+function Script:Complete-Docker-Network-Connect() {
+
 }
 
 function Script:Get-ExpandCommands($command, $option, $value) {
@@ -156,42 +212,68 @@ function Script:Get-ExpandCommands($command, $option, $value) {
 }
 
 function Get-DockerCompletion($inputString) {
-    switch -regex ($inputString -replace "docker ", "") {
+    $words = $inputString.Split(' ')
+    $command = "docker"
 
-        # Handles docker <command>
-        "^(?<command>\S*)$" {
-            Get-DockerCommands $Matches['command']
-        }
-
-        # Handles docker <command> --<option>
-        "^(?<command>$($dockerLongOptions.Keys -join '|'))\s+--(?<option>\S*)$" {
-            Get-DockerLongOptions -CommandName $Matches['command'] -Filter $Matches['option']
-        }
- 
-        # Handles docker <command> --<option>
-        "^(?<command>$($dockerShortOptions.Keys -join '|'))\s+-(?<option>\S*)$" {
-            Get-DockerShortOptions -CommandName $Matches['command'] -Filter $Matches['option']
-        }
-        
-
-        # Handles docker --<option> <value>
-        "--(?<option>\S*) (?<value>\S*)$" {
-            Get-ExpandCommands '' $Matches['option'] $Matches['value']
-        }
-            
-        # Handles docker <--option>
-        "^(--.*)*--(?<option>\S*)$" {
-            Get-DockerLongOptions -Filter $Matches['option']
+    $currentWord = $words[$words.Length-1]
+    $previousWord = $words[$words.Length-2]
+    for ($i = 1; $i -lt $words.Length; $i++) {
+        $word = $words[$i]
+        if ($globalOptionsWithArgs -ccontains $word) {
+            $i++
+            continue
         }
 
-        # Handles docker <-option>
-        "^(-.*)*-(?<option>\S*)$" {
-            Get-DockerShortOptions -Filter $Matches['option']
+        if ($word.StartsWith("-") -or [string]::IsNullOrWhitespace($word)) {
+            continue
         }
-
-        # Handles docker <cmd> CONTAINER
-        "^(?<command>attach|commit|diff|exec|export|kill|logs|pause|port|rename|restart|rm|start|stats|stop|top|unpause|update|wait).*(?<containerName>\S*)$" {
-            Get-DockerContainers -CommandName $Matches['command'] -Filter $Matches['ContainerName']
-        }
+        $command = $word
+        break
     }
+
+    Invoke-Expression "Complete-Docker-$command"
+
+    # switch -regex ($inputString -replace "docker ", "") {
+
+    #     # docker <command>
+    #     "^(?<command>\S*)$" {
+    #         Get-DockerCommands $Matches['command']
+    #     }
+
+    #     # docker <command> --<option>
+    #     "^(?<command>$($dockerLongOptions.Keys -join '|'))\s+--(?<option>\S*)$" {
+    #         Get-DockerLongOptions -CommandName $Matches['command'] -Filter $Matches['option']
+    #     }
+ 
+    #     # docker <command> -<option>
+    #     "^(?<command>$($dockerShortOptions.Keys -join '|'))\s+-(?<option>\S*)$" {
+    #         Get-DockerShortOptions -CommandName $Matches['command'] -Filter $Matches['option']
+    #     }
+        
+    #     # docker <mgmtcmd>
+    #     "^(?<mgmtcommand>$($dockerManagementCommands.Keys -join '|'))\s+(?<command>\S*)$" {
+    #         Get-DockerMgmtCommands -MgmtCommandName $Matches['mgmtcommand'] -CommandName $Matches['command']
+    #     }
+
+    #     # docker --<option> <value>
+    #     "--(?<option>\S*) (?<value>\S*)$" {
+    #         Get-ExpandCommands '' $Matches['option'] $Matches['value']
+    #     }
+            
+    #     # docker <--option>
+    #     "^(--.*)*--(?<option>\S*)$" {
+    #         Get-DockerLongOptions -Filter $Matches['option']
+    #     }
+
+    #     # docker <-option>
+    #     "^(-.*)*-(?<option>\S*)$" {
+    #         Get-DockerShortOptions -Filter $Matches['option']
+    #     }
+
+    #     # docker <cmd> CONTAINER
+    #     # .*\s(\S*)
+    #     "^(?<command>attach|commit|diff|exec|export|kill|logs|pause|port|rename|restart|rm|start|stats|stop|top|unpause|update|wait).*\s(?<containerName>\S*)$" {
+    #         Get-DockerContainers -CommandName $Matches['command'] -Filter $Matches['containerName']
+    #     }
+    # }
 }
