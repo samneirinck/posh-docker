@@ -1,6 +1,14 @@
 # posh-docker
 Powershell tab completion for Docker
 
+>  :warning:
+>
+>  posh-docker is in maintenance mode only. There is no plan to support any new features, such as management commands.
+> 
+>  Alternatives exist, such as [DockerCompletion](https://github.com/matt9ucci/DockerCompletion), which provides a more extensive tab completion experience (requires PowerShell >= 5.0 and docker cli >= 1.13)
+>
+>  :warning:
+
 [![Build status](https://ci.appveyor.com/api/projects/status/d4q4o9sdyvmm8yfh?svg=true)](https://ci.appveyor.com/project/samneirinck/posh-docker)
 
 
